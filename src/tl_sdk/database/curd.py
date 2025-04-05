@@ -63,14 +63,9 @@ class DBCURD(object):
                         session.bulk_update_mappings(TangLangLeadsTable, records_to_upsert)
                         upserted_count += len(records_to_upsert)
                         logger.info(f'Batch {batch_num + 1}: Updated {len(records_to_upsert)} records')
-
-                # 7. 提交事务
-                session.commit()
-                
             logger.info(f'Total inserted: {inserted_count} records,Total updated: {upserted_count} records')
             return inserted_count,upserted_count
         except Exception as e:
-            session.rollback()
             logger.error(f'DBCURD.get_session Error occurred: {e}')
             raise e
 
