@@ -38,18 +38,19 @@ class TangLangBaseClient(object):
         '/scrmCustomerApiCon/queryCustomerPageList':'key2',
         '/ShiXinVisitCon/queryVisitList':'key2',
         '/ShiXinReserCon/queryReserList':'key2',
-        '/syncApi/queryOrder':'key2',
+        '/syncApi/queryOrder':'key3',
     }
     
     
     
     
-    def __init__(self,company_id:int = 0,key1: str ='',key2: str='',host1:str='',host2:str='',sync_host:str=''):
+    def __init__(self,company_id:int = 0,key1: str ='',key2: str='',key3: str = '',host1:str='',host2:str='',host3:str=''):
         self.key1 = key1 if key1 != '' else os.getenv('KEY1')
         self.key2 = key2 if key2 != '' else os.getenv('KEY2')
+        self.key3 = key3 if key3 != '' else os.getenv('KEY3')
         self.host1 = host1 if host1 != '' else os.getenv('HOST1')
         self.host2 = host2 if host2 != '' else os.getenv('HOST2')
-        self.sync_host = sync_host if sync_host != '' else os.getenv('SYNC_HOST')
+        self.host3 = host3 if host3 != '' else os.getenv('HOST3')
         self.company_id = company_id if company_id != 0 else int(os.getenv('COMPANY_ID'))
         
     def md5(key_str: str) -> str:
@@ -96,6 +97,8 @@ class TangLangBaseClient(object):
             return self.host1
         elif key == 'key2':
             return self.host2
+        elif key == 'key3':
+            return self.host3
         else:
             raise ValueError(f'create_host_url post_url:{post_url} 通过post_url_mapping 返回了意料之外的 {key}')
 

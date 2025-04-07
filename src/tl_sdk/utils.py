@@ -21,7 +21,7 @@ def convert_dict_keys(data_dict):
     """
     return {camel_to_snake(key): value for key, value in data_dict.items()}
 
-def get_data(date_type:Literal['date','datetime'],date_range_type:Literal['day','year','month']|None=None)->Tuple[str,str]:
+def get_date_range(date_type:Literal['date','datetime'],date_range_type:Literal['day','year','month']|None=None)->Tuple[str,str]:
     if date_range_type is None:
         print('请输入日期范围类型:天,月,年')
         temp_input  = input()
