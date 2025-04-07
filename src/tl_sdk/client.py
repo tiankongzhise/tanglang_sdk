@@ -37,16 +37,19 @@ class TangLangBaseClient(object):
         '/scrmCustomerApiCon/querySimpleCustomerPageList':'key2',
         '/scrmCustomerApiCon/queryCustomerPageList':'key2',
         '/ShiXinVisitCon/queryVisitList':'key2',
+        '/ShiXinReserCon/queryReserList':'key2',
+        '/syncApi/queryOrder':'key2',
     }
     
     
     
     
-    def __init__(self,company_id:int = 0,key1: str ='',key2: str='',host1:str='',host2:str=''):
+    def __init__(self,company_id:int = 0,key1: str ='',key2: str='',host1:str='',host2:str='',sync_host:str=''):
         self.key1 = key1 if key1 != '' else os.getenv('KEY1')
         self.key2 = key2 if key2 != '' else os.getenv('KEY2')
         self.host1 = host1 if host1 != '' else os.getenv('HOST1')
         self.host2 = host2 if host2 != '' else os.getenv('HOST2')
+        self.sync_host = sync_host if sync_host != '' else os.getenv('SYNC_HOST')
         self.company_id = company_id if company_id != 0 else int(os.getenv('COMPANY_ID'))
         
     def md5(key_str: str) -> str:
@@ -85,6 +88,9 @@ class TangLangBaseClient(object):
     def create_host_url(self,post_url:str)->str:
         if self._post_url_mapping.get(post_url) is None:
             raise ValueError(f'{post_url} is not in post_url_mapping')
+        # if 'sync' in post_url:
+        #     return self.sync_host
+        
         key = self._post_url_mapping.get(post_url)
         if key == 'key1':
             return self.host1
@@ -106,7 +112,9 @@ class TangLangBaseClient(object):
             headers = {
                 "Content-Type": "application/json;charset=utf-8"
             }
+            
             req_url = f'{self.create_host_url(post_url)}{post_url}'
+            logger.debug(f"base_req-req_url:{req_url}")
             key_choice = self.post_url_to_key_choice(post_url)
             params.update(self.create_common_query(key_choice))
             
@@ -134,7 +142,7 @@ class TangLangBaseClient(object):
                     except json.JSONDecodeError:
                         return ResponseBaseDTO(-99, "Invalid JSON response")
                 else:
-                    return ResponseBaseDTO(-99, "接口请求失败，返回NULL")
+                    return ResponseBaseDTO(-99, "接口请求失败，返回NULL,response.text:{response.text},response.content:{response.content},response.status_code:{response.status_code}")
             else:
                 return ResponseBaseDTO(-99, f"接口请求失败，HttpStatus:{response.status_code}")
             
@@ -159,4 +167,11 @@ class TangLangClient(TangLangBaseClient):
         return self.base_req(post_url,params)
     def query_visit_list(self,params:dict)->ResponseBaseDTO:
         post_url  = '/ShiXinVisitCon/queryVisitList'
+        return self.base_req(post_url,params)
+
+    def query_reser_list(self,params:dict)->ResponseBaseDTO:
+        post_url  = '/ShiXinReserCon/queryReserList'
+        return self.base_req(post_url,params)
+    def query_order(self,params:dict)->ResponseBaseDTO:
+        post_url  = '/syncApi/queryOrder'
         return self.base_req(post_url,params)

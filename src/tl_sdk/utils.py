@@ -1,4 +1,6 @@
 import re
+from typing import Dict, Any, List, Literal,Tuple
+from datetime import datetime,timedelta,date
 
 def camel_to_snake(name):
     """
@@ -18,3 +20,62 @@ def convert_dict_keys(data_dict):
     :return: 转换后的字典，如 {'mts_lead_uuid': '123', 'first_name': 'John'}
     """
     return {camel_to_snake(key): value for key, value in data_dict.items()}
+
+def get_data(date_type:Literal['date','datetime'],date_range_type:Literal['day','year','month']|None=None)->Tuple[str,str]:
+    if date_range_type is None:
+        print('请输入日期范围类型:天,月,年')
+        temp_input  = input()
+        if temp_input:
+            if temp_input not in ['天','月','年']:
+                raise ValueError('请输入正确的日期范围类型:天,月,年')
+        else:
+            temp_input = '天'
+        if temp_input == '天':
+            date_range_type = 'day'
+        elif temp_input == '月':
+            date_range_type = 'month'
+        elif temp_input == '年':
+            date_range_type = 'year'
+        
+    
+    
+    
+    define_start_date = ''
+    define_end_date = ''
+    if date_range_type == 'day':
+        temp_start_date = (datetime.now() - timedelta(days=1)).replace(hour=0, minute=0, second=0)
+        temp_end_date = (datetime.now() - timedelta(days=1)).replace(hour=23, minute=59, second=59)
+    elif date_range_type == 'year':
+        temp_start_date = datetime(2025,1,1,0,0,0)
+        temp_end_date = (datetime.now() - timedelta(days=1)).replace(hour=23, minute=59, second=59)
+    elif date_range_type == 'month':
+        temp_start_date = datetime(datetime.now().year, datetime.now().month, 1,0,0,0)
+        temp_end_date = (datetime.now() - timedelta(days=1)).replace(hour=23, minute=59, second=59)
+    else:
+        raise ValueError('date_range_type must be day, month or year')
+    
+    if date_type == 'date':
+        define_start_date = temp_start_date.strftime('%Y-%m-%d')
+        define_end_date = temp_end_date.strftime('%Y-%m-%d')
+    elif date_type == 'datetime':
+        define_start_date = temp_start_date.strftime('%Y-%m-%d %H:%M:%S')
+        define_end_date = temp_end_date.strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        raise ValueError('date_type must be date or datetime')
+    
+    
+    
+    
+    if date_type == 'date':
+        print('请输入开始时间(格式:yyyy-mm-dd):')
+        start_time = input() or define_start_date
+        print('请输入结束时间(格式:yyyy-mm-dd):')
+        end_time = input() or define_end_date
+    elif date_type == 'datetime':
+        print('请输入开始时间(格式:yyyy-mm-dd HH:mm:ss):')
+        start_time = input() or define_start_date
+        print('请输入结束时间(格式:yyyy-mm-dd HH:mm:ss):')
+        end_time = input() or define_end_date
+    else:
+        raise ValueError('date_type参数错误')
+    return start_time, end_time
