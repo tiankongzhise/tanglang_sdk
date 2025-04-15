@@ -8,7 +8,7 @@ class DBCURD(object):
     def __init__(self):
         init_db()
     
-    def batch_insert_leads(self,data_list:List[Dict], batch_size=100):
+    def batch_insert_leads(self,data_list:List[Dict], batch_size=1000):
         """
         批量处理并插入不存在的记录
         :param data_list: 字典列表，每个字典包含lead信息
@@ -22,30 +22,34 @@ class DBCURD(object):
                 inserted_count = 0
                 upserted_count = 0
 
+                                    
+
+
+
+
                 for batch_num in range(total_batches):
                     start_idx = batch_num * batch_size
                     end_idx = start_idx + batch_size
                     current_batch = data_list[start_idx:end_idx]
-                    
+
                     # 3. 提取当前批次的uuid列表
-                    uuids_in_batch = [lead['mts_lead_uuid'] for lead in current_batch if 'mts_lead_uuid' in lead]
+                    uuids_in_data = [lead['mts_lead_uuid'] for lead in current_batch if 'mts_lead_uuid' in lead]
                     
-                    if not uuids_in_batch:
+                    if not uuids_in_data:
+                        print(f'batch_insert_leads->{batch_num}No uuids in data!')
                         continue
                         
-                     # 4. 查询数据库中已存在的uuid及其对应的PK (key_id)
+                    # 4. 查询数据库中已存在的uuid及其对应的PK (key_id)
                     existing_records_info = session.query(
                         TangLangLeadsTable.mts_lead_uuid,
                         TangLangLeadsTable.key_id # <-- Fetch the primary key
                     ).filter(
-                        TangLangLeadsTable.mts_lead_uuid.in_(uuids_in_batch)
+                        TangLangLeadsTable.mts_lead_uuid.in_(uuids_in_data)
                     ).all()
 
                     # Create a mapping from uuid to primary key for quick lookup
                     uuid_to_pk_map = {uuid: pk for uuid, pk in existing_records_info}
                     existing_uuids = set(uuid_to_pk_map.keys()) # Get the set of UUIDs that exist
-
-                    
 
                     # 5. 准备插入和更新的记录列表
                     records_to_insert = []
@@ -64,7 +68,13 @@ class DBCURD(object):
                             # This record exists, prepare for update
                             # IMPORTANT: Add the fetched primary key ('key_id')
                             update_mapping = lead_data.copy() # Use copy
-                            update_mapping['key_id'] = uuid_to_pk_map[lead_uuid] # Add the PK
+                            primary_key = uuid_to_pk_map.get(lead_uuid)
+                            if primary_key is None:
+                                primary_key = session.query(TangLangLeadsTable.key_id).filter_by(mts_lead_uuid=lead_uuid).scalar()
+                            if primary_key is None:
+                                logger.error(f'DBCURD.batch_insert_resv->No primary key found for uuid: {lead_uuid}')
+                                continue
+                            update_mapping['key_id'] = primary_key # Add the PK
                             records_to_update.append(update_mapping)
 
                     # 6. 批量插入新记录
@@ -85,7 +95,7 @@ class DBCURD(object):
 
 
 
-    def batch_insert_resv(self,data_list:List[Dict], batch_size=100):
+    def batch_insert_resv(self,data_list:List[Dict], batch_size=5000):
         """
         批量处理并插入不存在的记录
         :param data_list: 字典列表，每个字典包含lead信息

@@ -1,8 +1,11 @@
 from .utils import convert_dict_keys,get_date_range,spilt_date_range
 from .database.curd import DBCURD
 from .client import TangLangClient
+from typing import Literal
+import time
 
-def fetch_and_insert_all_customers(client:TangLangClient,start_time, end_time, batch_size=1000):
+
+def fetch_and_insert_all_customers(client:TangLangClient,start_time, end_time, batch_size=10000):
     """
     分页获取所有客户数据并批量插入数据库
     :param start_time: 开始时间
@@ -25,9 +28,10 @@ def fetch_and_insert_all_customers(client:TangLangClient,start_time, end_time, b
         
         try:
             # 1. 获取分页数据
+            beg_time = time.time()
             rsp = client.query_customer_page_list(params)
             response_data = rsp.to_dict()
-            
+            print(f'获取第 {page_num} 页数据耗时: {(time.time() - beg_time)}s,banch_size: {batch_size}')
             # 2. 检查数据是否有效
             if not response_data or not isinstance(response_data, dict):
                 print(f"第 {page_num} 页返回数据格式异常")
@@ -60,7 +64,7 @@ def fetch_and_insert_all_customers(client:TangLangClient,start_time, end_time, b
             break
     
     print(f"总共插入 {total_inserted} 条记录,总共更新 {total_upserted} 条记录")
-    return total_inserted
+    return total_inserted,total_upserted
 
 def fetch_and_insert_all_reservation(client:TangLangClient,start_time, end_time, batch_size=1000):
     """
@@ -101,14 +105,23 @@ def fetch_and_insert_all_reservation(client:TangLangClient,start_time, end_time,
 
     
     print(f"预约单总共插入 {total_inserted} 条记录,总共更新 {total_upserted} 条记录")
-    return total_inserted
+    return total_inserted,total_upserted
     
 
 
 
 
 
-def main():
+def main(func_type:Literal['c','r']='c'):
+    if func_type == 'r':
+        func = fetch_and_insert_all_reservation
+    elif func_type == 'c':
+        func = fetch_and_insert_all_customers
+    else:
+        print('请输入正确的选项')
+        return
+
+
     # 创建客户端实例
     client = TangLangClient()
     
@@ -116,17 +129,24 @@ def main():
     start_time, end_time = get_date_range('datetime')  
     
     print('是否按日获取数据？(y/n)')
+    total_inserted = 0
+    total_upserted = 0
     choice = input()
+    beg_time = time.time()
     if choice.lower() == 'n':
         # 调用函数获取并插入数据
         # fetch_and_insert_all_customers(client, start_time, end_time)
-        fetch_and_insert_all_customers(client, start_time, end_time)
+        func(client, start_time, end_time)
     elif choice.lower() == 'y':
         date_range = spilt_date_range(start_time, end_time)
         for tuple_item in date_range:
             print(f"开始时间：{tuple_item[0]},结束时间：{tuple_item[1]}")
-            fetch_and_insert_all_customers(client, tuple_item[0], tuple_item[1])
+            temp__inserted,temp_upserted=func(client, tuple_item[0], tuple_item[1])
+            total_inserted += temp__inserted
+            total_upserted += temp_upserted
+        print(f'总耗时:{(time.time() - beg_time)}s')
+        print(f"总共插入 {total_inserted} 条记录,总共更新 {total_upserted} 条记录")
     else:
         print('请输入正确的选项')
         return
-
+ 
