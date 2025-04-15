@@ -79,3 +79,17 @@ def get_date_range(date_type:Literal['date','datetime'],date_range_type:Literal[
     else:
         raise ValueError('date_type参数错误')
     return start_time, end_time
+
+
+def spilt_date_range(start_time:str, end_time:str)->List[Tuple[str,str]]:
+    local_start_time = start_time.strip()
+    local_end_time = end_time.strip()
+
+    result = []
+    beg_time = datetime.strptime(local_start_time, '%Y-%m-%d %H:%M:%S' if ' ' in local_start_time else '%Y-%m-%d')
+    end_time = datetime.strptime(local_end_time, '%Y-%m-%d %H:%M:%S' if ' ' in local_end_time else '%Y-%m-%d')
+    while beg_time <= end_time:
+        result.append((beg_time.strftime('%Y-%m-%d %H:%M:%S' if ' ' in local_start_time else '%Y-%m-%d'), 
+                       (beg_time + timedelta(days=1)-timedelta(seconds=1)).strftime('%Y-%m-%d %H:%M:%S' if ' ' in local_end_time else '%Y-%m-%d')))
+        beg_time += timedelta(days=1)
+    return result

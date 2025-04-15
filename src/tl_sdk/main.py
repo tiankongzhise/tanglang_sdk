@@ -1,4 +1,4 @@
-from .utils import convert_dict_keys,get_date_range
+from .utils import convert_dict_keys,get_date_range,spilt_date_range
 from .database.curd import DBCURD
 from .client import TangLangClient
 
@@ -45,7 +45,7 @@ def fetch_and_insert_all_customers(client:TangLangClient,start_time, end_time, b
 
             
             # 4. 打印进度
-            current_count = page_num * batch_size
+            current_count = page_num * batch_size if len(data)>=batch_size else len(data)
             total_count = response_data.get('count', 0)
             print(f"已处理 {current_count}/{total_count} 条记录...")
             
@@ -113,8 +113,20 @@ def main():
     client = TangLangClient()
     
     # 设置起始时间和结束时间
-    start_time, end_time = get_date_range('datetime')
+    start_time, end_time = get_date_range('datetime')  
     
-    # 调用函数获取并插入数据
-    # fetch_and_insert_all_customers(client, start_time, end_time)
-    fetch_and_insert_all_reservation(client, start_time, end_time)
+    print('是否按日获取数据？(y/n)')
+    choice = input()
+    if choice.lower() == 'n':
+        # 调用函数获取并插入数据
+        # fetch_and_insert_all_customers(client, start_time, end_time)
+        fetch_and_insert_all_customers(client, start_time, end_time)
+    elif choice.lower() == 'y':
+        date_range = spilt_date_range(start_time, end_time)
+        for tuple_item in date_range:
+            print(f"开始时间：{tuple_item[0]},结束时间：{tuple_item[1]}")
+            fetch_and_insert_all_customers(client, tuple_item[0], tuple_item[1])
+    else:
+        print('请输入正确的选项')
+        return
+
